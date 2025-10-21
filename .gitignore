@@ -1,0 +1,27 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+
+# Rider, ReSharper, JetBrains
+.idea/
+*.resharper
+*.DotSettings.user
+
+# EF Core Migrations (optional)
+**/Migrations/
+
+# Node / npm (if any frontend)
+node_modules/
+npm-debug.log
+
+# OS / misc
+*.log
+.DS_Store
+Thumbs.db
