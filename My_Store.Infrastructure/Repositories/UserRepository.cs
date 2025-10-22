@@ -10,12 +10,13 @@ using My_Store.Infrastructure.Persistence;
 
 namespace My_Store.Infrastructure.Repositories
 {
-    public class ProductRepository : GenericRepository<Product>, IProductRepository
+    public class UserRepository: GenericRepository<User>, IUserRepository
     {
+        public UserRepository(AppDbContext context) : base(context) { }
 
-        public ProductRepository(AppDbContext context) : base(context)
+        public async Task<User?> GetByUsernameAsync(string username)
         {
+            return await _dbSet.FirstOrDefaultAsync(u => u.Username == username);
         }
-
     }
 }

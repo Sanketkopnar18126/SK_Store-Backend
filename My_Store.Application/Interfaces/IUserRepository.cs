@@ -7,8 +7,8 @@ using My_Store.Domain.Entities;
 
 namespace My_Store.Application.Interfaces
 {
-    public interface IProductRepository:IGenericRepository<Product>
+    public interface IUserRepository : IGenericRepository<User>
     {
-
+        Task<User?> GetByUsernameAsync(string username);
     }
 }
