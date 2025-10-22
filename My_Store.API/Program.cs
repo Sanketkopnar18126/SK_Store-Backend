@@ -29,6 +29,14 @@ namespace My_Store.API
 
                 builder.Services.AddInfrastructure(builder.Configuration);
 
+                builder.Services.AddCors(options =>
+                {
+                    options.AddDefaultPolicy(policy =>
+                    {
+                        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                    });
+                });
+
                 var app = builder.Build();
 
                 app.UseSerilogRequestLogging();
@@ -46,6 +54,7 @@ namespace My_Store.API
 
                 app.UseHttpsRedirection();
 
+                app.UseCors();
                 app.UseAuthorization();
 
 
