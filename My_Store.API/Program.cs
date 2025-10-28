@@ -1,7 +1,11 @@
 
+using Microsoft.Extensions.Options;
 using My_Store.API.Middlewares;
 using My_Store.Infrastructure.Extensions;
 using Serilog;
+using My_Store.API.Cloudinary;
+using CloudinaryDotNet;      
+using CloudinaryDotNet.Actions;
 
 namespace My_Store.API
 {
@@ -12,12 +16,12 @@ namespace My_Store.API
             var builder = WebApplication.CreateBuilder(args);
 
 
-            Log.Logger = new LoggerConfiguration()
-            .ReadFrom.Configuration(builder.Configuration)
-            .Enrich.FromLogContext()
-            .CreateLogger();
-            builder.Host.UseSerilog();
-            // Add services to the container.
+                    Log.Logger = new LoggerConfiguration()
+                    .ReadFrom.Configuration(builder.Configuration)
+                    .Enrich.FromLogContext()
+                    .CreateLogger();
+                    builder.Host.UseSerilog();
+                    // Add services to the container.
 
             try
             {
@@ -29,11 +33,22 @@ namespace My_Store.API
 
                 builder.Services.AddInfrastructure(builder.Configuration);
 
+                // Cloudinary Part
+
+                builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
+                builder.Services.AddSingleton(sp =>
+                {
+                    var config = sp.GetRequiredService<IOptions<CloudinarySettings>>().Value;
+                    return new CloudinaryDotNet.Cloudinary(new CloudinaryDotNet.Account(config.CloudName, config.ApiKey, config.ApiSecret));
+                });
+
                 builder.Services.AddCors(options =>
                 {
                     options.AddDefaultPolicy(policy =>
                     {
-                        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                        policy.WithOrigins("http://localhost:5173")
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
                     });
                 });
 

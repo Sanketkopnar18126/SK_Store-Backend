@@ -14,6 +14,7 @@ namespace My_Store.Application.Mappings
         public ProductProfile()
         {
             CreateMap<Product, ProductDto>().ReverseMap();
+            CreateMap<Product, ProductForDisplayDto>();
             CreateMap<CreateProductDto, Product>();
             CreateMap<UpdateProductDto, Product>();
         }

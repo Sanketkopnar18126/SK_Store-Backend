@@ -17,5 +17,18 @@ namespace My_Store.Infrastructure.Repositories
         {
         }
 
+        public async Task<Product?> GetWithImagesAsync(int id, CancellationToken ct = default)
+        {
+            return await _dbSet
+                .Include(p => p.ImageUrls) 
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == id, ct);
+        }
+
+        public IQueryable<Product> QueryProducts()
+        {
+            return _dbSet.AsQueryable();
+        }
+
     }
 }

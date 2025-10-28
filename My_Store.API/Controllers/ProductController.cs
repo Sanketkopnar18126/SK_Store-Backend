@@ -12,6 +12,7 @@ namespace My_Store.API.Controllers
     {
         private readonly IProductService _service;
 
+
         public ProductController(IProductService service)
         {
             _service = service;
@@ -19,10 +20,10 @@ namespace My_Store.API.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] bool groupByCategory = false)
         {
-            var products = await _service.GetAllAsync();
-            return Ok(products);
+            var result = await _service.GetAllAsync(groupByCategory);
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
@@ -35,14 +36,16 @@ namespace My_Store.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateProductDto dto)
         {
-            var created = await _service.CreateAsync(dto);
+            int adminId=1;
+            var created = await _service.CreateAsync(dto,adminId);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateProductDto dto)
         {
-            var updated = await _service.UpdateAsync(id, dto);
+            int adminId = 1;
+            var updated = await _service.UpdateAsync(id, dto, adminId);
             return updated == null ? NotFound() : Ok(updated);
         }
 
@@ -52,6 +55,32 @@ namespace My_Store.API.Controllers
             var success = await _service.DeleteAsync(id);
             return success ? NoContent() : NotFound();
         }
+
+
+        [HttpPost("upload-images")]
+        public async Task<IActionResult> UploadImages( [FromForm] IFormFileCollection files, [FromQuery] int adminId)
+        {
+            if (files == null || files.Count == 0)
+                return BadRequest("No files uploaded");
+
+            var uploadDtos = files.Select(f => new ProductImageUploadDto
+            {
+                FileName = f.FileName,
+                Content = ReadFully(f.OpenReadStream())
+            }).ToList();
+
+            var urls = await _service.UploadImagesAsync(uploadDtos);
+
+            return Ok(new { imageUrls = urls });
+        }
+
+        private static byte[] ReadFully(Stream input)
+        {
+            using var ms = new MemoryStream();
+            input.CopyTo(ms);
+            return ms.ToArray();
+        }
+
 
     }
 }

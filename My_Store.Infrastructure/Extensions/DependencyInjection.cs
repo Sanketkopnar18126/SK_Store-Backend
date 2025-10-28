@@ -31,10 +31,12 @@ namespace My_Store.Infrastructure.Extensions
             services.AddScoped<IPasswordHasher<My_Store.Domain.Entities.User>, PasswordHasher<My_Store.Domain.Entities.User>>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IUserRepository, UserRepository>();
-            services.AddAutoMapper(typeof(ProductProfile));
+            //services.AddAutoMapper(typeof(ProductProfile));
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IProductService, ProductService>();
+
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             return services;
         }
