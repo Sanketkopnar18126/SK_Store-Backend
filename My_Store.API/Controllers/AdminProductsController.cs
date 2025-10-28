@@ -8,7 +8,7 @@ namespace My_Store.API.Controllers
 {
     [ApiController]
     [Route("api/admin/products")]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class AdminProductsController : ControllerBase
     {
         private readonly IProductService _productService;
@@ -18,12 +18,6 @@ namespace My_Store.API.Controllers
             _productService = productService;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetAll()
-        {
-            var products = await _productService.GetAllAsync();
-            return Ok(products);
-        }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ProductDto>> GetById(int id)
@@ -36,14 +30,16 @@ namespace My_Store.API.Controllers
         [HttpPost]
         public async Task<ActionResult<ProductDto>> Create(CreateProductDto dto)
         {
-            var product = await _productService.CreateAsync(dto);
+            int adminId = 1;
+            var product = await _productService.CreateAsync(dto,adminId);
             return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, UpdateProductDto dto)
         {
-            var updatedProduct = await _productService.UpdateAsync(id, dto);
+            int adminId = 1;
+            var updatedProduct = await _productService.UpdateAsync(id, dto,adminId);
             if (updatedProduct == null) return NotFound();
             return NoContent();
         }
