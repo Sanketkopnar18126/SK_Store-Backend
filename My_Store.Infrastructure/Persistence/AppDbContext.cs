@@ -13,6 +13,10 @@ namespace My_Store.Infrastructure.Persistence
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<Product> Products { get; set; }
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -32,6 +36,33 @@ namespace My_Store.Infrastructure.Persistence
 
                 entity.Property(p => p.Stock)
                       .IsRequired();
+            });
+
+            modelBuilder.Entity<Cart>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+
+                entity.Property(c => c.UserId)
+                      .IsRequired();
+
+                entity.HasMany(c => c.Items)
+                      .WithOne(ci => ci.Cart)
+                      .HasForeignKey(ci => ci.CartId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ✅ CartItem config
+            modelBuilder.Entity<CartItem>(entity =>
+            {
+                entity.HasKey(ci => ci.Id);
+
+                entity.Property(ci => ci.Quantity)
+                      .IsRequired();
+
+                entity.HasOne(ci => ci.Product)
+                      .WithMany()
+                      .HasForeignKey(ci => ci.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
 

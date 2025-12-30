@@ -7,8 +7,9 @@ using My_Store.Domain.Entities;
 
 namespace My_Store.Application.Interfaces
 {
-    public interface IUserRepository : IGenericRepository<User>
+    public interface ITokenService
     {
-        Task<User?> GetByEmailAsync(string email);
+        string GenerateAccessToken(User user);
+        RefreshToken GenerateRefreshToken(int userId);
     }
 }

@@ -9,6 +9,7 @@ namespace My_Store.Application.Interfaces
 {
     public interface IProductRepository:IGenericRepository<Product>
     {
-
+        Task<Product?> GetWithImagesAsync(int id, CancellationToken ct = default);
+        IQueryable<Product> QueryProducts(bool asNoTracking = true);
     }
 }

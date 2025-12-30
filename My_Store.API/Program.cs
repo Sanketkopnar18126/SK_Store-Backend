@@ -1,11 +1,13 @@
 
+using System.Text;
+using CloudinaryDotNet;      
+using CloudinaryDotNet.Actions;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using My_Store.API.Cloudinary;
 using My_Store.API.Middlewares;
 using My_Store.Infrastructure.Extensions;
 using Serilog;
-using My_Store.API.Cloudinary;
-using CloudinaryDotNet;      
-using CloudinaryDotNet.Actions;
 
 namespace My_Store.API
 {
@@ -32,6 +34,23 @@ namespace My_Store.API
                 builder.Services.AddSwaggerGen();
 
                 builder.Services.AddInfrastructure(builder.Configuration);
+
+                builder.Services.AddAuthentication("Bearer")
+                    .AddJwtBearer("Bearer", options =>
+                    {
+                        var jwt = builder.Configuration.GetSection("JwtSettings");
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuer = true,
+                            ValidateAudience = true,
+                            ValidateIssuerSigningKey = true,
+                            ValidateLifetime = true,
+                            ValidIssuer = jwt["Issuer"],
+                            ValidAudience = jwt["Audience"],
+                            IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(jwt["SecretKey"]))
+                        };
+                    });
 
                 // Cloudinary Part
 
@@ -70,6 +89,7 @@ namespace My_Store.API
                 app.UseHttpsRedirection();
 
                 app.UseCors();
+                app.UseAuthentication();
                 app.UseAuthorization();
 
 

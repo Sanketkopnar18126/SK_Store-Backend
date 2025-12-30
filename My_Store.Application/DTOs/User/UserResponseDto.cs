@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace My_Store.Application.DTOs.User
 {
-    public class UserUpdateDto
+    public class UserResponseDto
     {
         public int Id { get; set; }
         public string FullName { get; set; } = null!;
