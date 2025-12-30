@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,13 +27,15 @@ namespace My_Store.Infrastructure.Extensions
                 }));
 
             // Register repository implementations (example):
-            services.AddScoped<IPasswordHasher<My_Store.Domain.Entities.User>, PasswordHasher<My_Store.Domain.Entities.User>>();
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IUserRepository, UserRepository>();
-            //services.AddAutoMapper(typeof(ProductProfile));
+
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ITokenService, TokenService>();
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<ICartRepository, CartRepository>();
+            services.AddScoped<ICartService, CartService>();
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

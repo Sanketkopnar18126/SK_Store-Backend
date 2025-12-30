@@ -13,9 +13,9 @@ namespace My_Store.Application.Mappings
     {
         public UserProfile()
         {
-            CreateMap<User, UserDto>();
+            CreateMap<User, UserResponseDto>();
 
-            CreateMap<UserCreateDto, User>()
+            CreateMap<RegisterUserDto, User>()
            .ForMember(dest => dest.PasswordHash, opt => opt.Ignore());
         }
 

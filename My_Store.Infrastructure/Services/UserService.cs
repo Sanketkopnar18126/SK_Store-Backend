@@ -7,85 +7,50 @@ using AutoMapper;
 using Microsoft.Extensions.Logging;
 using My_Store.Application.Interfaces;
 using My_Store.Domain.Entities;
-using Microsoft.AspNetCore.Identity;
 using My_Store.Application.DTOs.User;
 
 
 namespace My_Store.Infrastructure.Services
 {
-    public class UserService: IUserService
+    public class UserService : IUserService
     {
 
-        private readonly IUserRepository _repo;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        private readonly IPasswordHasher<User> _passwordHasher;
-        private readonly ILogger<UserService> _logger;
 
-        public UserService(
-            IUserRepository repo,
-            IMapper mapper,
-            IPasswordHasher<User> passwordHasher,
-            ILogger<UserService> logger)
+        public UserService(IUnitOfWork unitOfWork, IMapper mapper)
         {
-            _repo = repo;
+            _unitOfWork = unitOfWork;
             _mapper = mapper;
-            _passwordHasher = passwordHasher;
-            _logger = logger;
         }
 
-        public async Task AssignRoleAsync(int id, string role)
+        public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
         {
-            var user = await _repo.GetByIdAsync(id);
-            if (user == null) throw new Exception("User not found");
-
-            user.Role = role;
-            await _repo.UpdateAsync(user);
-            await _repo.SaveChangesAsync();
+            var users = await _unitOfWork.Users.GetAsync();
+            return _mapper.Map<IEnumerable<UserResponseDto>>(users);
         }
 
-        public async Task<UserDto> CreateAsync(UserCreateDto dto)
+        public async Task<UserResponseDto?> GetUserByIdAsync(int id)
         {
-            var existingUser = await _repo.GetByUsernameAsync(dto.Username);
-            if (existingUser != null) throw new Exception("Username already exists");
-
-            var user = _mapper.Map<User>(dto);
-            user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
-
-            await _repo.AddAsync(user);
-            await _repo.SaveChangesAsync();
-
-            return _mapper.Map<UserDto>(user);
+            var user = await _unitOfWork.Users.GetByIdAsync(id);
+            return _mapper.Map<UserResponseDto>(user);
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task UpdateUserAsync(int id, UserUpdateDto dto)
         {
-            var user = await _repo.GetByIdAsync(id);
-            if (user == null) throw new Exception("User not found");
+            var user = await _unitOfWork.Users.GetByIdAsync(id)
+                       ?? throw new Exception("User not found");
 
-            await _repo.DeleteAsync(user);
-            await _repo.SaveChangesAsync();
+            // Update allowed fields
+            user.FullName = dto.FullName ?? user.FullName;
+            user.Phone = dto.Phone ?? user.Phone;
+
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.Users.UpdateAsync(user);
+            await _unitOfWork.CommitAsync();
         }
 
-        public async Task<IEnumerable<UserDto>> GetAllAsync()
-        {
-            var users = await _repo.GetAllAsync();
-            return _mapper.Map<IEnumerable<UserDto>>(users);
-        }
-
-        public async Task<UserDto?> GetByIdAsync(int id)
-        {
-            var user = await _repo.GetByIdAsync(id);
-            return user == null ? null : _mapper.Map<UserDto>(user);
-        }
-
-        public async Task UpdateAsync(int id, UserUpdateDto dto)
-        {
-            var user = await _repo.GetByIdAsync(id);
-            if (user == null) throw new Exception("User not found");
-
-            _mapper.Map(dto, user);
-            await _repo.UpdateAsync(user);
-            await _repo.SaveChangesAsync();
-        }
     }
+
 }
