@@ -15,6 +15,10 @@ namespace My_Store.Infrastructure.Repositories
         private ProductRepository? _productRepository;
         private CartRepository? _cartRepository;
         private UserRepository? _userRepository;
+        private BannerRepository? _bannersRepository;
+        private PaymentRepository? _paymentRepository;
+        private OrderRepository? _orderRepository;
+
         public UnitOfWork(AppDbContext context)
         {
             _context = context;
@@ -23,6 +27,10 @@ namespace My_Store.Infrastructure.Repositories
         public IProductRepository Products => _productRepository ??= new ProductRepository(_context);
         public ICartRepository Carts => _cartRepository ??= new CartRepository(_context);
         public IUserRepository Users => _userRepository ??= new UserRepository(_context);
+        public IBannerRepository Banners => _bannersRepository ??= new BannerRepository(_context);
+        public IPaymentRepository Payments => _paymentRepository ??= new PaymentRepository(_context);
+        public IOrderRepository Orders => _orderRepository ??= new OrderRepository(_context);
+
 
         public async Task<int> CommitAsync(CancellationToken ct = default)
         {

@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using My_Store.Application.DTOs.Order;
 using My_Store.Domain.Entities;
 
 namespace My_Store.Application.Interfaces
 {
-    public interface ITokenService
+    public interface IOrderRepository: IGenericRepository<Order>
     {
-        string GenerateAccessToken(User user);
-        RefreshToken GenerateRefreshToken(Guid userId);
+        Task<Order?> GetOrderWithItemsAsync(Guid orderId, CancellationToken ct);
     }
 }

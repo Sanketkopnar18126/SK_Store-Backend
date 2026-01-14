@@ -15,17 +15,16 @@ namespace My_Store.Domain.Entities
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         //public string? CreatedByIp { get; private set; }
 
-        public int UserId { get; private set; }
+        public Guid UserPublicId { get; private set; }
         public User? User { get; private set; }
 
         protected RefreshToken() { }
 
-        public RefreshToken(string token, DateTime expiresAt, string? createdByIp, int userId)
+        public RefreshToken(string token, DateTime expiresAt, string? createdByIp, Guid userId)
         {
             Token = token;
             ExpiresAt = expiresAt;
-            //CreatedByIp = createdByIp;
-            UserId = userId;
+            UserPublicId = userId;
             CreatedAt = DateTime.UtcNow;
         }
 

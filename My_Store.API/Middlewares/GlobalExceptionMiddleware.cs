@@ -35,12 +35,25 @@ namespace My_Store.API.Middlewares
 
             var (statusCode, title) = exception switch
             {
-                InvalidProductException _ => (HttpStatusCode.BadRequest, "Invalid Product"),
-                ProductNotFoundException _ => (HttpStatusCode.NotFound, "Product Not Found"),
-                _ => (HttpStatusCode.InternalServerError, "Internal Server Error")
+                UnauthorizedAccessException _ =>
+                    (HttpStatusCode.Unauthorized, "Unauthorized"),
+
+                InvalidProductException _ =>
+                    (HttpStatusCode.BadRequest, "Invalid Product"),
+
+                ProductNotFoundException _ =>
+                    (HttpStatusCode.NotFound, "Product Not Found"),
+
+                _ =>
+                    (HttpStatusCode.InternalServerError, "Internal Server Error")
             };
 
-            _logger.LogError(exception, "Unhandled Exception: {Title}, StatusCode: {StatusCode}", title, (int)statusCode);
+            _logger.LogError(
+                exception,
+                "Unhandled Exception: {Title}, StatusCode: {StatusCode}",
+                title,
+                (int)statusCode
+            );
 
             var response = new
             {
@@ -57,5 +70,6 @@ namespace My_Store.API.Middlewares
             context.Response.StatusCode = (int)statusCode;
             await context.Response.WriteAsync(payload);
         }
+
     }
 }

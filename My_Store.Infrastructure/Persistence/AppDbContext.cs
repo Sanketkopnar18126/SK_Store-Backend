@@ -17,6 +17,10 @@ namespace My_Store.Infrastructure.Persistence
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<Banner> Banners { get; set; }
+        public DbSet<Payment> Payments { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -64,6 +68,80 @@ namespace My_Store.Infrastructure.Persistence
                       .HasForeignKey(ci => ci.ProductId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+
+
+            // User Config
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(u => u.Id);
+
+                entity.HasAlternateKey(u => u.PublicId); // ⭐ REQUIRED
+
+                entity.HasIndex(u => u.PublicId)
+                      .IsUnique();
+
+                entity.Property(u => u.FullName).IsRequired();
+                entity.Property(u => u.Email).IsRequired();
+                entity.Property(u => u.PasswordHash).IsRequired();
+            });
+
+
+            // Refresh Token
+
+            modelBuilder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasKey(rt => rt.Id);
+
+                entity.HasOne(rt => rt.User)
+                      .WithMany(u => u.RefreshTokens)
+                      .HasForeignKey(rt => rt.UserPublicId)
+                      .HasPrincipalKey(u => u.PublicId); // ⭐ REQUIRED
+            });
+
+
+            // Order
+                modelBuilder.Entity<Order>()
+                    .HasOne<User>()
+                    .WithMany()
+                    .HasForeignKey(o => o.UserId)
+                    .HasPrincipalKey(u => u.PublicId);
+
+
+            // Payment
+
+            modelBuilder.Entity<Payment>(entity =>
+            {
+                entity.HasKey(p => p.Id);
+
+                entity.Property(p => p.Amount)
+                      .HasPrecision(18, 2)
+                      .IsRequired();
+
+                entity.Property(p => p.Currency)
+                      .HasMaxLength(10)
+                      .IsRequired();
+
+                entity.Property(p => p.RazorpayOrderId)
+                      .HasMaxLength(100);
+
+                entity.Property(p => p.RazorpayPaymentId)
+                      .HasMaxLength(100);
+
+                entity.Property(p => p.RazorpaySignature)
+                      .HasMaxLength(255);
+
+                entity.Property(p => p.CreatedAt)
+                      .IsRequired();
+                entity.Property(p => p.Status)
+                        .HasMaxLength(50);
+
+                entity.HasOne(p => p.Order)
+                      .WithMany()
+                      .HasForeignKey(p => p.OrderId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+
         }
 
     }
