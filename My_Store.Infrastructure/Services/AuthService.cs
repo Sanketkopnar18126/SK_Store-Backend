@@ -9,7 +9,10 @@ public class AuthService : IAuthService
     private readonly ITokenService _tokenService;
     private readonly IMapper _mapper;
 
-    public AuthService(IUnitOfWork unitOfWork, ITokenService tokenService, IMapper mapper)
+    public AuthService(
+        IUnitOfWork unitOfWork,
+        ITokenService tokenService,
+        IMapper mapper)
     {
         _unitOfWork = unitOfWork;
         _tokenService = tokenService;
@@ -18,39 +21,29 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterUserDto dto)
     {
-        try 
-        {
-            var existingUser = await _unitOfWork.Users.GetByEmailAsync(dto.Email);
-            if (existingUser != null)
-                throw new Exception("Email already exists");
+        var existingUser = await _unitOfWork.Users.GetByEmailAsync(dto.Email);
+        if (existingUser != null)
+            throw new Exception("Email already exists");
 
-            var user = new User(
-                fullName: dto.FullName,
-                email: dto.Email,
-                passwordHash: BCrypt.Net.BCrypt.HashPassword(dto.Password),
-                phone: dto.Phone
-            );
-             
-           var token= await GenerateAuthResponseAsync(user);
+        var user = new User(
+            fullName: dto.FullName,
+            email: dto.Email,
+            passwordHash: BCrypt.Net.BCrypt.HashPassword(dto.Password),
+            phone: dto.Phone
+        );
 
-            await _unitOfWork.Users.AddAsync(user);
-            await _unitOfWork.CommitAsync();
+        // ✅ SAVE USER FIRST
+        await _unitOfWork.Users.AddAsync(user);
+        await _unitOfWork.CommitAsync();
 
-            return token;
-
-        }
-        catch(Exception ex) 
-        {
-            throw new Exception("Registration Failed :" + ex);
-        }
+        // ✅ THEN GENERATE TOKENS
+        return await GenerateAuthResponseAsync(user);
     }
 
     public async Task<AuthResponseDto> LoginAsync(LoginUserDto dto)
     {
         var user = await _unitOfWork.Users.GetByEmailAsync(dto.Email)
                    ?? throw new Exception("Invalid email or password");
-
-        var data= BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
 
         if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             throw new Exception("Invalid email or password");
@@ -61,7 +54,7 @@ public class AuthService : IAuthService
     private async Task<AuthResponseDto> GenerateAuthResponseAsync(User user)
     {
         var accessToken = _tokenService.GenerateAccessToken(user);
-        var refreshToken = _tokenService.GenerateRefreshToken(user.Id);
+        var refreshToken = _tokenService.GenerateRefreshToken(user.PublicId);
 
         user.RefreshTokens.Add(refreshToken);
         user.UpdatedAt = DateTime.UtcNow;
@@ -80,53 +73,54 @@ public class AuthService : IAuthService
     public async Task<AuthResponseDto> RefreshTokenAsync(string refreshToken)
     {
         var user = _unitOfWork.Users.Query()
-            .Where(u => u.RefreshTokens.Any(rt => rt.Token == refreshToken))
-            .FirstOrDefault();
+            .FirstOrDefault(u => u.RefreshTokens.Any(rt => rt.Token == refreshToken));
 
         if (user == null)
-            throw new Exception("Invalid refresh token");
+            throw new UnauthorizedAccessException("Refresh token not found");
 
-        var tokenEntity = user.RefreshTokens.First(rt => rt.Token == refreshToken);
+        var token = user.RefreshTokens
+            .FirstOrDefault(rt => rt.Token == refreshToken);
 
-        if (!tokenEntity.IsActive())
-            throw new Exception("Refresh token expired or revoked");
+        if (token == null || !token.IsActive())
+            throw new UnauthorizedAccessException("Refresh token expired");
 
-        // Revoke old token
-        tokenEntity.Revoke();
+        // 🔁 Rotate
+        token.Revoke();
 
-        // Generate a new one
-        var newRefreshToken = _tokenService.GenerateRefreshToken(user.Id);
-
+        var newRefreshToken = _tokenService.GenerateRefreshToken(user.PublicId);
         user.RefreshTokens.Add(newRefreshToken);
-        user.UpdatedAt = DateTime.UtcNow;
 
         await _unitOfWork.CommitAsync();
 
-        var newAccessToken = _tokenService.GenerateAccessToken(user);
-
         return new AuthResponseDto
         {
-            AccessToken = newAccessToken,
-            RefreshToken = newRefreshToken.Token,
+            AccessToken = _tokenService.GenerateAccessToken(user),
+            //RefreshToken = newRefreshToken.Token,
             ExpiresAt = DateTime.UtcNow.AddMinutes(30),
             User = _mapper.Map<UserResponseDto>(user)
         };
     }
 
+
+
     public async Task LogoutAsync(string refreshToken)
     {
         var user = _unitOfWork.Users.Query()
-            .Where(u => u.RefreshTokens.Any(rt => rt.Token == refreshToken))
-            .FirstOrDefault();
+            .FirstOrDefault(u => u.RefreshTokens.Any(rt => rt.Token == refreshToken));
 
         if (user == null)
-            throw new Exception("Invalid refresh token");
+            return; // already logged out
 
-        var token = user.RefreshTokens.First(rt => rt.Token == refreshToken);
+        var token = user.RefreshTokens
+            .FirstOrDefault(rt => rt.Token == refreshToken);
+
+        if (token == null)
+            return;
 
         token.Revoke();
         user.UpdatedAt = DateTime.UtcNow;
 
         await _unitOfWork.CommitAsync();
     }
+
 }

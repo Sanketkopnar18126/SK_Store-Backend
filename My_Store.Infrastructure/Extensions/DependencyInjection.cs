@@ -19,14 +19,22 @@ namespace My_Store.Infrastructure.Extensions
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             var conn = configuration.GetConnectionString("DefaultConnection");
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(conn, sqlOptions =>
-                {
-                    // Optional: enable resilient retries for transient SQL errors
-                    sqlOptions.EnableRetryOnFailure();
-                }));
+
+            //  Sql ==> PSQL
+
+
+            //services.AddDbContext<AppDbContext>(options =>
+            //    options.UseSqlServer(conn, sqlOptions =>
+            //    {
+            //        // Optional: enable resilient retries for transient SQL errors
+            //        sqlOptions.EnableRetryOnFailure();
+            //    }));
 
             // Register repository implementations (example):
+
+            services.AddDbContext<AppDbContext>(options =>
+                      options.UseNpgsql(conn));
+
 
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITokenService, TokenService>();
@@ -36,6 +44,11 @@ namespace My_Store.Infrastructure.Extensions
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ICartRepository, CartRepository>();
             services.AddScoped<ICartService, CartService>();
+            services.AddScoped<IPaymentRepository, PaymentRepository>();
+            services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
+
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

@@ -9,6 +9,7 @@ namespace My_Store.Domain.Entities
     public class User
     {
         public int Id { get; set; }
+        public Guid PublicId { get; private set; }=Guid.NewGuid();
         public string FullName { get; set; } = null!;
         public string Email { get; set; } = null!;
         public string PasswordHash { get; set; } = null!;
@@ -24,6 +25,7 @@ namespace My_Store.Domain.Entities
 
         public User(string fullName, string email, string passwordHash, string phone, string role = "Customer")
         {
+            PublicId = Guid.NewGuid();
             FullName = fullName;
             Email = email;
             PasswordHash = passwordHash;

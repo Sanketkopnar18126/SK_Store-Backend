@@ -9,8 +9,8 @@ namespace My_Store.Domain.Entities
     public class Cart
     {
         public int Id { get; private set; }
-        public int UserId { get; private set; }              // owner
-        public DateTime CreatedAt { get; private set; } = DateTime.Now;
+        public int UserId { get; private set; }             
+        public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; private set; }
 
         public readonly List<CartItem> _items = new();

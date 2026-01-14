@@ -7,9 +7,8 @@ using My_Store.Domain.Entities;
 
 namespace My_Store.Application.Interfaces
 {
-    public interface ITokenService
+    public interface IBannerRepository:IGenericRepository<Banner>
     {
-        string GenerateAccessToken(User user);
-        RefreshToken GenerateRefreshToken(Guid userId);
+        Task<IReadOnlyList<Banner>> GetAllAsync(CancellationToken ct = default);
     }
 }

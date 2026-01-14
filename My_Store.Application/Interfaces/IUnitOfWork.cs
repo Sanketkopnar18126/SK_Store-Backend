@@ -11,6 +11,9 @@ namespace My_Store.Application.Interfaces
         IProductRepository Products { get; }
         ICartRepository Carts { get; }
         IUserRepository Users { get; }
+        IBannerRepository Banners { get; }
+        IPaymentRepository Payments { get; }
+        IOrderRepository Orders { get; }
         Task<int> CommitAsync(CancellationToken ct = default);
    
     }

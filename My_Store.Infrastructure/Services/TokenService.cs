@@ -31,11 +31,12 @@ public class TokenService : ITokenService
 
         var claims = new[]
         {
-        new Claim("id", user.Id.ToString()),
-        new Claim("email", user.Email),
-        new Claim("fullname", user.FullName),
-        new Claim(ClaimTypes.Role, user.Role)
-    };
+                new Claim(ClaimTypes.NameIdentifier, user.PublicId.ToString()), 
+                new Claim("userId", user.PublicId.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("fullname", user.FullName),
+                new Claim(ClaimTypes.Role, user.Role)
+        };
 
         var token = new JwtSecurityToken(
             issuer: _config["JwtSettings:Issuer"],
@@ -51,7 +52,7 @@ public class TokenService : ITokenService
     }
 
 
-    public RefreshToken GenerateRefreshToken(int userId)
+    public RefreshToken GenerateRefreshToken(Guid userPublicId)
     {
         var bytes = new byte[64];
         using var rng = RandomNumberGenerator.Create();
@@ -61,7 +62,7 @@ public class TokenService : ITokenService
             token: Convert.ToBase64String(bytes),
             expiresAt: DateTime.UtcNow.AddDays(7),
             createdByIp: null,
-            userId: userId
+            userId: userPublicId
         );
     }
 }

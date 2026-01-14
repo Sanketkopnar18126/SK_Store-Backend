@@ -1,11 +1,14 @@
-
+﻿
+using System.Security.Claims;
 using System.Text;
 using CloudinaryDotNet;      
 using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using My_Store.API.Cloudinary;
 using My_Store.API.Middlewares;
+using My_Store.Application.Common.Settings;
 using My_Store.Infrastructure.Extensions;
 using Serilog;
 
@@ -29,28 +32,65 @@ namespace My_Store.API
             {
 
                 builder.Services.AddControllers();
+                builder.Services.AddHttpContextAccessor();
                 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen();
 
                 builder.Services.AddInfrastructure(builder.Configuration);
 
+                // JWT
+
                 builder.Services.AddAuthentication("Bearer")
-                    .AddJwtBearer("Bearer", options =>
+                .AddJwtBearer("Bearer", options =>
+                {
+                    var jwt = builder.Configuration.GetSection("JwtSettings");
+                    var secretKey = jwt["SecretKey"];
+
+                    options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        var jwt = builder.Configuration.GetSection("JwtSettings");
-                        options.TokenValidationParameters = new TokenValidationParameters
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(secretKey!)
+                        ),
+                        ValidateIssuer = true,
+                        ValidIssuer = jwt["Issuer"],
+                        ValidateAudience = true,
+                        ValidAudience = jwt["Audience"],
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.Zero
+                    };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
                         {
-                            ValidateIssuer = true,
-                            ValidateAudience = true,
-                            ValidateIssuerSigningKey = true,
-                            ValidateLifetime = true,
-                            ValidIssuer = jwt["Issuer"],
-                            ValidAudience = jwt["Audience"],
-                            IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(jwt["SecretKey"]))
-                        };
-                    });
+                            var path = context.HttpContext.Request.Path;
+
+                            // 🔥 IMPORTANT: skip token validation for refresh
+                            if (path.StartsWithSegments("/api/Auth/refresh"))
+                            {
+                                context.NoResult();
+                                return Task.CompletedTask;
+                            }
+
+                            return Task.CompletedTask;
+                        },
+
+                        OnAuthenticationFailed = context =>
+                        {
+                            Console.WriteLine("JWT AUTH FAILED:");
+                            Console.WriteLine(context.Exception.Message);
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
+
+
+
+                // Razorpay Service
+
+                builder.Services.Configure<RazorpaySettings>(builder.Configuration.GetSection("Razorpay"));
 
                 // Cloudinary Part
 
@@ -67,7 +107,8 @@ namespace My_Store.API
                     {
                         policy.WithOrigins("http://localhost:5173")
                           .AllowAnyMethod()
-                          .AllowAnyHeader();
+                          .AllowAnyHeader()
+                          .AllowCredentials();
                     });
                 });
 
